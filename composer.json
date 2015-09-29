@@ -8,5 +8,11 @@
             "name": "Sam",
             "email": "sam@mousa.nl"
         }
-    ]
+    ],
+     "autoload" : {
+         "psr-4" : {
+             "SamIT\\Proxy\\" : [
+                 "src/"
+             ]                                                                           }
+     }
 }
