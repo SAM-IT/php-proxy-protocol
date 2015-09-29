@@ -1,5 +1,5 @@
 <?php
-namespace samit\proxy;
+namespace SamIT\Proxy;
 
 
 use GuzzleHttp\Psr7\Stream;
