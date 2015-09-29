@@ -1,13 +1,9 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Sam
- * Date: 29-9-2015
- * Time: 9:07
- */
-
 namespace samit\proxy;
 
+
+use GuzzleHttp\Psr7\Stream;
+use Psr\Http\Message\StreamInterface;
 
 class Header
 {
@@ -123,14 +119,19 @@ class Header
         return $this->constructProxyHeader();
     }
 
-
-    public static function createForward4($socket, $targetAddress, $targetPort) {
+    /**
+     * @param $socket
+     * @param $targetAddress
+     * @param $targetPort
+     * @return StreamInterface
+     * @throws \Exception
+     */
+    public static function createForward4($sourceAddress, $sourcePort, $targetAddress, $targetPort) {
         $result = new static();
+        $result->sourceAddress = $sourceAddress;
         $result->targetPort = $targetPort;
         $result->targetAddress = $targetAddress;
-        if (!socket_getpeername($socket, $result->sourceAddress, $result->sourcePort)) {
-            throw new \Exception("Unable to get source address / port from socket.");
-        }
+        $result->sourcePort = $sourcePort;
         return $result;
     }
 

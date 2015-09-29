@@ -1,0 +1,12 @@
+{
+    "name": "samit/proxy",
+    "description": "Implementation of the proxy protocol",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Sam",
+            "email": "sam@mousa.nl"
+        }
+    ]
+}
