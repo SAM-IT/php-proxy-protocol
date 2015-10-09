@@ -4,6 +4,7 @@ namespace SamIT\Proxy;
 
 use GuzzleHttp\Psr7\Stream;
 use Psr\Http\Message\StreamInterface;
+use React\ChildProcess\Process;
 
 class Header
 {
@@ -18,8 +19,10 @@ class Header
     const USOCK = "\x32";
 
     // 12 bytes.
-    public $signature = "\x0D\x0A\x0D\x0A\x00\x0D\x0A\x51\x55\x49\x54\x0A";
-
+    public $signatures = [
+        2 => "\x0D\x0A\x0D\x0A\x00\x0D\x0A\x51\x55\x49\x54\x0A",
+        1 => "PROXY"
+    ];
     // 4 bits
     public $version = 2;
     // 4 bits
@@ -44,18 +47,33 @@ class Header
     public $targetPort;
 
 
-
+    protected function getProtocol() {
+        if ($this->version == 2) {
+            return $this->protocol;
+        } else {
+            return array_flip((new \ReflectionClass($this))->getConstants())[$this->protocol];
+        }
+    }
     protected function getVersionCommand() {
-        return chr($this->version * 2^5 + $this->command);
+        if ($this->version == 2) {
+            return chr($this->version * 2 ^ 5 + $this->command);
+        }
     }
     /**
      * @return uint16_t
      */
-    protected function getAddressLength() {
-        return pack($this->lengths[$this->protocol], 'n');
+    protected function getAddressLength()
+    {
+        if ($this->version == 2) {
+            return pack('n', $this->lengths[$this->protocol]);
+        }
+
     }
 
     protected function encodeAddress($address, $protocol) {
+        if ($this->version == 1) {
+            return $address;
+        }
         switch ($protocol) {
             case self::TCP4:
             case self::UDP4:
@@ -74,16 +92,19 @@ class Header
         return $result;
     }
     protected function getAddresses() {
-        return $this->encodeAddress($this->sourceAddress, $this->protocol) . $this->encodeAddress($this->targetAddress, $this->protocol);
+        return $this->encodeAddress($this->sourceAddress, $this->protocol) . ($this->version == 1 ? " " : "") .$this->encodeAddress($this->targetAddress, $this->protocol);
     }
 
     protected function encodePort($port, $protocol) {
+        if ($this->version == 1) {
+            return $port;
+        }
         switch ($protocol) {
             case self::TCP4:
             case self::UDP4:
             case self::TCP6:
             case self::UDP6:
-                $result = pack($port, "n");
+                $result = pack("n", $port);
                 break;
             case self::USTREAM:
             case self::USOCK:
@@ -97,21 +118,22 @@ class Header
     }
 
     protected function getPorts() {
-        return $this->encodePort($this->sourcePort, $this->protocol) . $this->encodePort($this->targetPort, $this->protocol);
+        return $this->encodePort($this->sourcePort, $this->protocol) . ($this->version == 1 ? " " : "") . $this->encodePort($this->targetPort, $this->protocol);
+    }
+
+    protected function getSignature() {
+        return $this->signatures[$this->version];
     }
     public function constructProxyHeader() {
-        return implode('', [
-            // 12 bytes
-            $this->signature,
-            // 1 byte
+        return implode($this->version == 1 ? "\x20" : "", array_filter([
+            $this->getSignature(),
             $this->getVersionCommand(),
-            // 1 byte
-            $this->protocol,
-            // 2 bytes
+            $this->getProtocol(),
             $this->getAddressLength(),
             $this->getAddresses(),
-            $this->getPorts()
-        ]);
+            $this->getPorts(),
+            $this->version == 1 ? "\r\n" : null
+        ]));
     }
 
     public function __toString()
@@ -128,6 +150,7 @@ class Header
      */
     public static function createForward4($sourceAddress, $sourcePort, $targetAddress, $targetPort) {
         $result = new static();
+        $result->version = 1;
         $result->sourceAddress = $sourceAddress;
         $result->targetPort = $targetPort;
         $result->targetAddress = $targetAddress;
