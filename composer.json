@@ -1,5 +1,5 @@
 {
-    "name": "samit/proxy",
+    "name": "sam-it/proxy",
     "description": "Implementation of the proxy protocol",
     "type": "library",
     "license": "MIT",
