@@ -1,10 +1,7 @@
 <?php
 namespace SamIT\Proxy;
 
-
-use GuzzleHttp\Psr7\Stream;
 use Psr\Http\Message\StreamInterface;
-use React\ChildProcess\Process;
 
 class Header
 {
@@ -47,7 +44,8 @@ class Header
     public $targetPort;
 
 
-    protected function getProtocol() {
+    protected function getProtocol()
+    {
         if ($this->version == 2) {
             return $this->protocol;
         } else {
@@ -91,7 +89,13 @@ class Header
         }
         return $result;
     }
-    protected function getAddresses() {
+
+    /**
+     * @return string
+     * @throws \Exception
+     */
+    protected function getAddresses()
+    {
         return $this->encodeAddress($this->sourceAddress, $this->protocol) . ($this->version == 1 ? " " : "") .$this->encodeAddress($this->targetAddress, $this->protocol);
     }
 
@@ -117,13 +121,27 @@ class Header
         return $result;
     }
 
-    protected function getPorts() {
+    /**
+     * @return string
+     * @throws \Exception
+     */
+    protected function getPorts()
+    {
         return $this->encodePort($this->sourcePort, $this->protocol) . ($this->version == 1 ? " " : "") . $this->encodePort($this->targetPort, $this->protocol);
     }
 
-    protected function getSignature() {
+    /**
+     * @return string
+     */
+    protected function getSignature()
+    {
         return $this->signatures[$this->version];
     }
+
+    /**
+     * Constructs the header by concatenating all relevant fields.
+     * @return mixed
+     */
     public function constructProxyHeader() {
         return implode($this->version == 1 ? "\x20" : "", array_filter([
             $this->getSignature(),
@@ -142,9 +160,12 @@ class Header
     }
 
     /**
-     * @param $socket
-     * @param $targetAddress
-     * @param $targetPort
+     * This function creates the forwarding header. This header should be sent over the upstream connection as soon as
+     * it is established.
+     * @param string $sourceAddress
+     * @param int $sourcePort
+     * @param string $targetAddress
+     * @param int $targetPort
      * @return StreamInterface
      * @throws \Exception
      */
