@@ -5,8 +5,10 @@ namespace SamIT\Proxy;
 use React\Dns\Resolver\Resolver;
 use React\EventLoop\LoopInterface;
 use React\Promise\Promise;
+use React\Promise\RejectedPromise;
 use React\Socket\Connection;
 use React\Socket\ConnectionInterface;
+use React\SocketClient\TcpConnector;
 use React\Stream\Stream;
 
 /**
@@ -24,25 +26,23 @@ class Forwarder
     )
     {
         $this->loop = $loop;
-//        $this->connector =
+        $this->connector = new TcpConnector($loop);
     }
 
-    public function forward(Connection $connection = null, $forwardAddress, $forwardPort)
+    /**
+     * Forwards a connection to the specified host / port using the proxy protocol.
+     * @param Connection $connection
+     * @param string $forwardAddress The host to forward to
+     * @param int $forwardPort The port to forward to
+     */
+    public function forward(Connection $connection, $forwardAddress, $forwardPort)
     {
         list($sourceAddress, $sourcePort) = explode(':', stream_socket_get_name($connection->stream, true));
         list($targetAddress, $targetPort) = explode(':', stream_socket_get_name($connection->stream, false));
-//        var_dump("tcp://$forwardAddress:$forwardPort");
-//        $client = stream_socket_client("tcp://$forwardAddress:$forwardPort");
-//        $forwardedConnection = new Stream($client, $this->loop);
         $header = Header::createForward4($sourceAddress, $sourcePort, $targetAddress, $targetPort);
-//        $forwardedConnection->write($header);
-//
-//        $connection->pipe($forwardedConnection);
-//        $forwardedConnection->pipe($connection);
-
-        return $this->connector
-            ->create($forwardAddress, $forwardPort)
-            ->then(function(ConnectionInterface $forwardedConnection) use (
+        /** @var RejectedPromise $result */
+        $this->connector->create($forwardAddress, $forwardPort)
+            ->then(function(Stream $forwardedConnection) use (
                 $connection, $header,
                 $sourceAddress, $sourcePort,
                 $targetAddress, $targetPort

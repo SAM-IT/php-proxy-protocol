@@ -16,7 +16,7 @@ class Header
     const USOCK = "\x32";
 
     // 12 bytes.
-    public $signatures = [
+    protected static $signatures = [
         2 => "\x0D\x0A\x0D\x0A\x00\x0D\x0A\x51\x55\x49\x54\x0A",
         1 => "PROXY"
     ];
@@ -28,7 +28,7 @@ class Header
     // 1 byte
     public $protocol = self::TCP4;
 
-    protected $lengths = [
+    protected static $lengths = [
         self::TCP4 => 12,
         self::UDP4 => 12,
         self::TCP6 => 36,
@@ -54,7 +54,7 @@ class Header
     }
     protected function getVersionCommand() {
         if ($this->version == 2) {
-            return chr($this->version * 2 ^ 5 + $this->command);
+            return chr(($this->version << 4) + $this->command);
         }
     }
     /**
@@ -63,7 +63,7 @@ class Header
     protected function getAddressLength()
     {
         if ($this->version == 2) {
-            return pack('n', $this->lengths[$this->protocol]);
+            return pack('n', self::$lengths[$this->protocol]);
         }
 
     }
@@ -78,6 +78,29 @@ class Header
             case self::TCP6:
             case self::UDP6:
                 $result = inet_pton($address);
+                break;
+            case self::USTREAM:
+            case self::USOCK:
+                throw new \Exception("Unix socket not (yet) supported.");
+                break;
+            default:
+                throw new \UnexpectedValueException("Invalid protocol.");
+
+        }
+        return $result;
+    }
+
+    protected static function decodeAddress($version, $address, $protocol)
+    {
+        if ($version == 1) {
+            return $address;
+        }
+        switch ($protocol) {
+            case self::TCP4:
+            case self::UDP4:
+            case self::TCP6:
+            case self::UDP6:
+                $result = inet_ntop($address);
                 break;
             case self::USTREAM:
             case self::USOCK:
@@ -135,12 +158,12 @@ class Header
      */
     protected function getSignature()
     {
-        return $this->signatures[$this->version];
+        return self::$signatures[$this->version];
     }
 
     /**
      * Constructs the header by concatenating all relevant fields.
-     * @return mixed
+     * @return string
      */
     public function constructProxyHeader() {
         return implode($this->version == 1 ? "\x20" : "", array_filter([
@@ -171,11 +194,78 @@ class Header
      */
     public static function createForward4($sourceAddress, $sourcePort, $targetAddress, $targetPort) {
         $result = new static();
-        $result->version = 1;
+        $result->version = 2;
         $result->sourceAddress = $sourceAddress;
         $result->targetPort = $targetPort;
         $result->targetAddress = $targetAddress;
         $result->sourcePort = $sourcePort;
+        return $result;
+    }
+
+    /**
+     * @param string $data
+     * @return Header|null
+     */
+    public static function parseHeader(&$data)
+    {
+        foreach(self::$signatures as $version => $signature) {
+            // Match.
+            if (strncmp($data, $signature, strlen($signature)) === 0) {
+                if ($version === 1) {
+                    $result = self::parseVersion1($data);
+                    break;
+                } elseif ($version === 2) {
+                    $result = self::parseVersion2($data);
+                    break;
+                }
+            }
+        }
+        if (isset($result)) {
+            $constructed = $result->constructProxyHeader();
+            if (strncmp($constructed, $data, strlen($constructed)) === 0) {
+                $data = substr($data, strlen($constructed));
+                return $result;
+            }
+        }
+    }
+
+    protected static function parseVersion1($data)
+    {
+        $parts = explode("\x20", $data);
+        if (count($parts) === 7 && $parts[6] === "\r\n") {
+            $result = new Header();
+            $result->version = 1;
+            $result->protocol = $parts[1];
+            $result->sourceAddress = $parts[2];
+            $result->targetAddress = $parts[3];
+            $result->sourcePort = $parts[4];
+            $result->targetPort = $parts[5];
+            return $result;
+        }
+    }
+
+    protected static function parseVersion2($data)
+    {
+        $version = ord(substr($data, 12, 1)) >> 4;
+        $command = ord(substr($data, 12, 1)) % 16;
+        $protocol = substr($data, 13, 1);
+
+        $pos = 16;
+        $sourceAddress = self::decodeAddress($version, substr($data, $pos, self::$lengths[$protocol] / 2  - 2), $protocol);
+        $pos += self::$lengths[$protocol] / 2  - 2;
+        $targetAddress = self::decodeAddress($version, substr($data, $pos, self::$lengths[$protocol] / 2  - 2), $protocol);
+        $pos += self::$lengths[$protocol] / 2  - 2;
+        $sourcePort = unpack('n', substr($data, $pos, 2))[1];
+        $targetPort = unpack('n', substr($data, $pos + 2, 2))[1];
+
+        $result = new Header();
+        $result->version = 2;
+        $result->command = $command;
+        $result->protocol = $protocol;
+        $result->sourceAddress = $sourceAddress;
+        $result->targetAddress = $targetAddress;
+        $result->sourcePort = $sourcePort;
+        $result->targetPort = $targetPort;
         return $result;
     }
 
