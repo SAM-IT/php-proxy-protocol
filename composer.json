@@ -16,6 +16,7 @@
              ]                                                                           }
      },
     "require": {
-        "react/socket": "^0.4.3"
+        "react/socket": "^0.4.3",
+        "react/socket-client": "^0.5"
     }
 }
