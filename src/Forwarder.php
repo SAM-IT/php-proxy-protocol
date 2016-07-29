@@ -4,10 +4,7 @@ namespace SamIT\Proxy;
 
 use React\Dns\Resolver\Resolver;
 use React\EventLoop\LoopInterface;
-use React\Promise\Promise;
 use React\Promise\RejectedPromise;
-use React\Socket\Connection;
-use React\Socket\ConnectionInterface;
 use React\SocketClient\TcpConnector;
 use React\Stream\Stream;
 

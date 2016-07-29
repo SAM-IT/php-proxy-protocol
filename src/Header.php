@@ -1,8 +1,6 @@
 <?php
 namespace SamIT\Proxy;
 
-use Psr\Http\Message\StreamInterface;
-
 class Header
 {
     const CMD_PROXY = 1;
