@@ -10,7 +10,7 @@ use React\EventLoop\LoopInterface;
  * This class wraps an existing connection and add support for the proxy protocol.
  * @package SamIT\Proxy
  */
-class Connection extends \React\Socket\Connection implements ConnectionInterface
+class ProxyConnection extends PortConnection implements PortConnectionInterface
 {
 
     /**
@@ -20,7 +20,7 @@ class Connection extends \React\Socket\Connection implements ConnectionInterface
 
     public function __construct($stream, LoopInterface $loop)
     {
-        parent::__construct($stream, $loop);
+        parent::__construct($stream, $loop, true);
     }
 
     public function handleData($stream)
@@ -46,16 +46,24 @@ class Connection extends \React\Socket\Connection implements ConnectionInterface
         $header = Header::parseHeader($data);
         if ($header instanceof Header) {
             $this->header = $header;
+            $this->emit('init', [$this]);
         } else {
             $this->header = false;
         }
         return $data;
     }
 
+    public function getHeader()
+    {
+        if (!isset($this->header)) {
+            throw new \RuntimeException("Cannot use connection until a proxy header has been received.");
+        }
+        return $this->header;
+    }
 
     public function getRemoteAddress()
     {
-        return $this->header->sourceAddress;
+        return $this->getHeader()->sourceAddress;
     }
 
     /**
@@ -63,6 +71,22 @@ class Connection extends \React\Socket\Connection implements ConnectionInterface
      */
     public function getRemotePort()
     {
-        return $this->header->sourcePort;
+        return $this->getHeader()->sourcePort;
+    }
+
+    /**
+     * @return int The target port for this connection.
+     */
+    public function getTargetPort()
+    {
+        return $this->getHeader()->targetPort;
+    }
+
+    /**
+     * @return string The target address for this connection.
+     */
+    public function getTargetAddress()
+    {
+        return $this->getHeader()->targetAddress;
     }
 }

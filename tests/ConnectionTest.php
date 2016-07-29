@@ -4,7 +4,7 @@
 namespace SamIT\Tests\Proxy;
 
 
-use SamIT\Proxy\Connection;
+use SamIT\Proxy\ProxyConnection;
 use React\Socket\Server;
 
 class ConnectionTest extends \PHPUnit_Framework_TestCase
@@ -20,9 +20,9 @@ class ConnectionTest extends \PHPUnit_Framework_TestCase
         $master = $class->getProperty('master');
         $master->setAccessible(true);
 
-        $servConn = new Connection($server->master, $loop);
+        $servConn = new ProxyConnection($server->master, $loop);
 
-        $this->assertInstanceOf(Connection::class, $servConn);
+        $this->assertInstanceOf(ProxyConnection::class, $servConn);
     }
 
     private function createLoopMock()

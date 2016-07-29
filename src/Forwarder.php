@@ -4,7 +4,9 @@ namespace SamIT\Proxy;
 
 use React\Dns\Resolver\Resolver;
 use React\EventLoop\LoopInterface;
+use React\Promise\Promise;
 use React\Promise\RejectedPromise;
+use React\Socket\Connection;
 use React\SocketClient\TcpConnector;
 use React\Stream\Stream;
 
@@ -28,25 +30,29 @@ class Forwarder
 
     /**
      * Forwards a connection to the specified host / port using the proxy protocol.
-     * @param Connection $connection
+     * @param ProxyConnection $connection
      * @param string $forwardAddress The host to forward to
      * @param int $forwardPort The port to forward to
+     * @return Promise
      */
     public function forward(Connection $connection, $forwardAddress, $forwardPort)
     {
         list($sourceAddress, $sourcePort) = explode(':', stream_socket_get_name($connection->stream, true));
         list($targetAddress, $targetPort) = explode(':', stream_socket_get_name($connection->stream, false));
         $header = Header::createForward4($sourceAddress, $sourcePort, $targetAddress, $targetPort);
-        /** @var RejectedPromise $result */
-        $this->connector->create($forwardAddress, $forwardPort)
+        return $this->connector->create($forwardAddress, $forwardPort)
             ->then(function(Stream $forwardedConnection) use (
                 $connection, $header,
                 $sourceAddress, $sourcePort,
                 $targetAddress, $targetPort
             ) {
-                $forwardedConnection->write($header);
-                $connection->pipe($forwardedConnection);
-                $forwardedConnection->pipe($connection);
+                    $forwardedConnection->getBuffer()->once('full-drain', function() use ($connection, $forwardedConnection) {
+                        $connection->pipe($forwardedConnection);
+                        $forwardedConnection->pipe($connection);
+                        $forwardedConnection->emit('init', [$forwardedConnection]);
+                    });
+                    $forwardedConnection->write($header);
+                return $forwardedConnection;
         });
     }
 
