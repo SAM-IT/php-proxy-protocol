@@ -49,6 +49,7 @@ class ProxyConnection extends PortConnection implements PortConnectionInterface
             $this->emit('init', [$this]);
         } else {
             $this->header = false;
+            throw new \RuntimeException("Invalid proxy header received.");
         }
         return $data;
     }

@@ -37,8 +37,7 @@ class Server extends \React\Socket\Server
         $timer = $this->loop->addTimer(5, function() use ($client) {
             $client->removeAllListeners('init');
             $client->end('Timeout waiting for PROXY header.');
-            echo "Timeout waiting for PROXY header.\n";
-//            $client->close();
+            $this->emit('proxytimeout', [$client]);
         });
 
         $client->on('init', function($connection) use ($client, $timer) {
