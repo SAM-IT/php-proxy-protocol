@@ -14,5 +14,8 @@
              "SamIT\\Proxy\\" : [
                  "src/"
              ]                                                                           }
-     }
+     },
+    "require": {
+        "react/socket": "^0.4.3"
+    }
 }

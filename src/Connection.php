@@ -5,7 +5,6 @@ namespace SamIT\Proxy;
 
 
 use React\EventLoop\LoopInterface;
-use React\Stream\WritableStreamInterface;
 
 /**
  * This class wraps an existing connection and add support for the proxy protocol.

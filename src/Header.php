@@ -145,7 +145,7 @@ class Header
             case self::UDP4:
             case self::TCP6:
             case self::UDP6:
-                $result = pack("n", $port);
+                $result = pack('n', $port);
                 break;
             case self::USTREAM:
             case self::USOCK:
@@ -203,7 +203,7 @@ class Header
      * @param int $sourcePort
      * @param string $targetAddress
      * @param int $targetPort
-     * @return StreamInterface
+     * @return self
      * @throws \Exception
      */
     public static function createForward4($sourceAddress, $sourcePort, $targetAddress, $targetPort) {
