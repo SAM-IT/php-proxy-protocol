@@ -11,7 +11,7 @@ use React\Stream\WritableStreamInterface;
  * This class wraps an existing connection and add support for the proxy protocol.
  * @package SamIT\Proxy
  */
-class Connection extends \React\Socket\Connection
+class Connection extends \React\Socket\Connection implements ConnectionInterface
 {
 
     /**
@@ -56,10 +56,14 @@ class Connection extends \React\Socket\Connection
 
     public function getRemoteAddress()
     {
-        if ($this->header instanceof Header) {
-            return $this->header->sourceAddress;
-        }
-        return parent::getRemoteAddress();
+        return $this->header->sourceAddress;
     }
 
+    /**
+     * @return int The remote port for this connection.
+     */
+    public function getRemotePort()
+    {
+        return $this->header->sourcePort;
+    }
 }

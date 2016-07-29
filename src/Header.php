@@ -37,10 +37,24 @@ class Header
         self::USOCK => 216,
     ];
 
-
+    /**
+     * @var string The address of the client.
+     */
     public $sourceAddress;
+
+    /**
+     * @var string The address to which the client connected.
+     */
     public $targetAddress;
+
+    /**
+     * @var int The port of the client
+     */
     public $sourcePort;
+
+    /**
+     * @var int The port to which the client connected.
+     */
     public $targetPort;
 
 
