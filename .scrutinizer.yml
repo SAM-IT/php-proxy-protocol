@@ -20,7 +20,7 @@ build:
     dependencies:
         before:
             - 'wget https://phar.io/releases/phive.phar'
-            - 'php phive.phar install'
+            - 'php phive.phar install --trust-gpg-keys 4AA394086372C20A'
     environment:
         php:
             version: 5.6.9
