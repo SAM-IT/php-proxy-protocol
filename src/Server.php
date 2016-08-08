@@ -7,6 +7,7 @@ namespace SamIT\Proxy;
 use React\Dns\Resolver\Factory;
 use React\Dns\Resolver\Resolver;
 use React\EventLoop\LoopInterface;
+use React\Socket\Connection;
 
 /**
  * Class Server
@@ -14,12 +15,14 @@ use React\EventLoop\LoopInterface;
  * If no proxy header is received within 5 seconds after connection opening than the connection is closed.
  * The `connection` event is only triggered after receiving the header.
  * @package SamIT\Proxy
+ * @event connection When an new connection has been fully set up (ie a proxy header was received).
+ * @emits proxytimeout When a new connection failed to send a proxy header within 5 seconds after opening the connection.
  */
 class Server extends \React\Socket\Server
 {
     private $loop;
 
-    public function __construct(LoopInterface $loop, Resolver $resolver)
+    public function __construct(LoopInterface $loop)
     {
         $this->loop = $loop;
         parent::__construct($loop);
@@ -37,7 +40,8 @@ class Server extends \React\Socket\Server
         $timer = $this->loop->addTimer(5, function() use ($client) {
             $client->removeAllListeners('init');
             $client->end('Timeout waiting for PROXY header.');
-            $this->emit('proxytimeout', [$client]);
+
+            $this->emit('proxytimeout', [new Connection($client->stream, $this->loop)]);
         });
 
         $client->on('init', function($connection) use ($client, $timer) {

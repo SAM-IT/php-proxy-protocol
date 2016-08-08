@@ -16,7 +16,7 @@ class ConnectionTest extends \PHPUnit_Framework_TestCase
 
         $server->listen(0);
 
-        $class  = new \ReflectionClass('React\\Socket\\Server');
+        $class  = new \ReflectionClass(\React\Socket\Server::class);
         $master = $class->getProperty('master');
         $master->setAccessible(true);
 
