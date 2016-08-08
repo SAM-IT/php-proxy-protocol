@@ -94,10 +94,8 @@ class Header
             case self::USTREAM:
             case self::USOCK:
                 throw new \Exception("Unix socket not (yet) supported.");
-                break;
             default:
                 throw new \UnexpectedValueException("Invalid protocol.");
-
         }
         return $result;
     }
@@ -117,7 +115,6 @@ class Header
             case self::USTREAM:
             case self::USOCK:
                 throw new \Exception("Unix socket not (yet) supported.");
-                break;
             default:
                 throw new \UnexpectedValueException("Invalid protocol.");
 
@@ -148,7 +145,6 @@ class Header
             case self::USTREAM:
             case self::USOCK:
                 throw new \Exception("Unix socket not (yet) supported.");
-                break;
             default:
                 throw new \UnexpectedValueException("Invalid protocol.");
 
