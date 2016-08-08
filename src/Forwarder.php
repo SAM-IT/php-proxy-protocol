@@ -32,8 +32,19 @@ class Forwarder
      */
     public function forward(ConnectionInterface $connection, $forwardAddress, $forwardPort)
     {
-        list($sourceAddress, $sourcePort) = explode(':', stream_socket_get_name($connection->stream, true));
-        list($targetAddress, $targetPort) = explode(':', stream_socket_get_name($connection->stream, false));
+        if ($connection instanceof PortConnection) {
+            $sourceAddress = $connection->getSourceAddress();
+            $sourcePort = $connection->getSourcePort();
+            $targetAddress = $connection->getTargetAddress();
+            $targetPort = $connection->getTargetPort();
+        } elseif ($connection instanceof Connection) {
+            list($sourceAddress, $sourcePort) = explode(':', stream_socket_get_name($connection->stream, true));
+            list($targetAddress, $targetPort) = explode(':', stream_socket_get_name($connection->stream, false));
+        } else {
+            throw new \InvalidArgumentException("This connection type is not supported.");
+        }
+
+
         $header = Header::createForward4($sourceAddress, $sourcePort, $targetAddress, $targetPort);
         /** @var Promise $promise */
         $promise = $this->connector->create($forwardAddress, $forwardPort);
