@@ -60,7 +60,8 @@ class PortConnection extends \React\Socket\Connection implements PortConnectionI
 
     protected function parsePort($address)
     {
-        return end($parts = explode(':', $address));
+        $parts = explode(':', $address);
+        return end($parts);
     }
 
     /**
