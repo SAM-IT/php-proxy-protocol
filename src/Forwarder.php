@@ -5,7 +5,6 @@ namespace SamIT\Proxy;
 use React\Promise\Promise;
 use React\Socket\Connection;
 use React\Socket\ConnectionInterface;
-use React\Socket\Server;
 use React\Socket\ServerInterface;
 use React\SocketClient\TcpConnector;
 use React\Stream\Stream;
@@ -26,12 +25,12 @@ class Forwarder
 
     /**
      * Forwards a connection to the specified host / port using the proxy protocol.
-     * @param ProxyConnection $connection
+     * @param ConnectionInterface $connection
      * @param string $forwardAddress The host to forward to
      * @param int $forwardPort The port to forward to
      * @return Promise
      */
-    public function forward(Connection $connection, $forwardAddress, $forwardPort)
+    public function forward(ConnectionInterface $connection, $forwardAddress, $forwardPort)
     {
         list($sourceAddress, $sourcePort) = explode(':', stream_socket_get_name($connection->stream, true));
         list($targetAddress, $targetPort) = explode(':', stream_socket_get_name($connection->stream, false));
