@@ -1,10 +1,7 @@
 <?php
-
-
 namespace SamIT\Tests\Proxy;
 
-
-use React\Dns\Resolver\Resolver;
+use React\SocketClient\TcpConnector;
 use SamIT\Proxy\Forwarder;
 
 class ForwarderTest extends \PHPUnit_Framework_TestCase
@@ -12,9 +9,8 @@ class ForwarderTest extends \PHPUnit_Framework_TestCase
     public function testConstructor()
     {
         $loop   = $this->createLoopMock();
-        $resolver = $this->createMock(Resolver::class);
-        $forwarder = new Forwarder($loop, $resolver);
-
+        $connector = new TcpConnector($loop);
+        $forwarder = new Forwarder($connector);
         $this->assertInstanceOf(Forwarder::class, $forwarder);
     }
 
