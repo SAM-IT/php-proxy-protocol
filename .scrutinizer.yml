@@ -1,0 +1,14 @@
+filter:
+    excluded_paths:
+        - 'tests/*'
+checks:
+    php: true 
+coding_style:
+    php:
+        spaces:
+            around_operators:
+                concatenation: true
+build:
+    environment:
+        php:
+            version: 5.6.9
