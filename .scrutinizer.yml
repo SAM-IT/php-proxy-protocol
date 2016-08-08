@@ -9,6 +9,18 @@ coding_style:
             around_operators:
                 concatenation: true
 build:
+    tests:
+        override:
+            -
+                command: 'tools/phpunit --coverage-clover=coverage-file'
+                coverage:
+                    file: 'coverage-file'
+                    format: 'php-clover'
+
+    dependencies:
+        before:
+            - 'wget https://phar.io/releases/phive.phar'
+            - 'php phive.phar install'
     environment:
         php:
             version: 5.6.9

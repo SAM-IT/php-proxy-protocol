@@ -8,6 +8,7 @@ use React\Dns\Resolver\Factory;
 use React\Dns\Resolver\Resolver;
 use React\EventLoop\LoopInterface;
 use React\Socket\Connection;
+use React\SocketClient\TcpConnector;
 use React\Stream\Stream;
 
 /**
@@ -27,13 +28,13 @@ class ForwardingServer extends \React\Socket\Server
     private $forwardAddress;
     private $forwardPort;
 
-    public function __construct(LoopInterface $loop, Resolver $resolver, $forwardAddress, $forwardPort)
+    public function __construct(LoopInterface $loop, TcpConnector $connector, $forwardAddress, $forwardPort)
     {
         $this->loop = $loop;
         $this->forwardAddress = $forwardAddress;
         $this->forwardPort = $forwardPort;
         parent::__construct($loop);
-        $this->forwarder = new Forwarder($loop, $resolver);
+        $this->forwarder = new Forwarder($connector);
     }
 
     /**
