@@ -2,10 +2,7 @@
 
 namespace SamIT\Proxy;
 
-use React\Dns\Resolver\Resolver;
-use React\EventLoop\LoopInterface;
 use React\Promise\Promise;
-use React\Promise\RejectedPromise;
 use React\Socket\Connection;
 use React\SocketClient\TcpConnector;
 use React\Stream\Stream;
@@ -18,14 +15,10 @@ use React\Stream\Stream;
 class Forwarder
 {
     protected $connector;
-    protected $loop;
-    public function __construct(
-        LoopInterface $loop,
-        Resolver $resolver
-    )
+
+    public function __construct(TcpConnector $connector)
     {
-        $this->loop = $loop;
-        $this->connector = new TcpConnector($loop);
+        $this->connector = $connector;
     }
 
     /**
