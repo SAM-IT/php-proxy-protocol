@@ -2,6 +2,8 @@
 
 namespace SamIT\Proxy;
 
+use Evenement\EventEmitterInterface;
+use Evenement\EventEmitterTrait;
 use React\Promise\Promise;
 use React\Socket\Connection;
 use React\Socket\ConnectionInterface;
@@ -14,8 +16,9 @@ use React\Stream\Stream;
  * Implements a connection where the remote end thinks it is talking to another server.
  * @package SamIT\Proxy
  */
-class Forwarder
+class Forwarder implements EventEmitterInterface
 {
+    use EventEmitterTrait;
     protected $connector;
 
     public function __construct(TcpConnector $connector)
@@ -30,7 +33,7 @@ class Forwarder
      * @param int $forwardPort The port to forward to
      * @return Promise
      */
-    public function forward(ConnectionInterface $connection, $forwardAddress, $forwardPort)
+    public function forward(ConnectionInterface $connection, $forwardAddress, $forwardPort, $protocolVersion = 2)
     {
         if ($connection instanceof PortConnection) {
             $sourceAddress = $connection->getSourceAddress();
@@ -44,8 +47,9 @@ class Forwarder
             throw new \InvalidArgumentException("This connection type is not supported.");
         }
 
+        $connection->pause();
 
-        $header = Header::createForward4($sourceAddress, $sourcePort, $targetAddress, $targetPort);
+        $header = Header::createForward4($sourceAddress, $sourcePort, $targetAddress, $targetPort, $protocolVersion);
         /** @var Promise $promise */
         $promise = $this->connector->create($forwardAddress, $forwardPort);
         return $promise
@@ -54,19 +58,23 @@ class Forwarder
                 $sourceAddress, $sourcePort,
                 $targetAddress, $targetPort
             ) {
+                $forwardedConnection->pause();
                 $forwardedConnection->getBuffer()->once('full-drain', function() use ($connection, $forwardedConnection) {
+                    $this->emit('forward', [$connection, $forwardedConnection]);
                     $connection->pipe($forwardedConnection);
                     $forwardedConnection->pipe($connection);
-                    $forwardedConnection->emit('init', [$forwardedConnection]);
+                    $connection->resume();
+                    $forwardedConnection->resume();
                 });
                 $forwardedConnection->write($header);
+
         });
     }
 
-    public function forwardAll(ServerInterface $server, $forwardAddress, $forwardPort)
+    public function forwardAll(ServerInterface $server, $forwardAddress, $forwardPort, $protocolVersion = 2)
     {
-        $server->on('connection', function(ConnectionInterface $connection) use ($forwardAddress, $forwardPort) {
-           $this->forward($connection, $forwardAddress, $forwardPort);
+        $server->on('connection', function(ConnectionInterface $connection) use ($forwardAddress, $forwardPort, $protocolVersion) {
+            $this->forward($connection, $forwardAddress, $forwardPort, $protocolVersion);
         });
     }
 

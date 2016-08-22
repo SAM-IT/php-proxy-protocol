@@ -200,9 +200,9 @@ class Header
      * @return self
      * @throws \Exception
      */
-    public static function createForward4($sourceAddress, $sourcePort, $targetAddress, $targetPort) {
+    public static function createForward4($sourceAddress, $sourcePort, $targetAddress, $targetPort, $version = 2) {
         $result = new static();
-        $result->version = 2;
+        $result->version = $version;
         $result->sourceAddress = $sourceAddress;
         $result->targetPort = $targetPort;
         $result->targetAddress = $targetAddress;
